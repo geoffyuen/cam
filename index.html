@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Sexy Cam</title>
+    <style>
+        html {
+            margin: 0;
+            padding: 0;
+            background: black;
+          }
+          video {
+            width: 100%;
+            height: auto;
+          }
+          #app select {
+                position: absolute;
+                top: 0;
+                left: 50%;
+                transform: translate(-50%, 100%);
+                opacity: 0;
+                transition: .3s;
+          }
+          #app {
+            position: relative;
+          }
+          #app:hover select {
+              opacity: 1;
+          }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <video></video>
+        <select name="cams" id="cams"></select>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+// Some info from http://tangiblejs.com/posts/viewing-webcam-feeds-and-grabbing-still-frames-in-a-modern-way
+
+// Prefer camera resolution nearest to 1280x720.
+var constraints = {
+    audio: false,
+    video: {
+      width: 1280,
+      height: 720
+    }
+  };
+  var video;
+
+  navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
+    video = document.querySelector('video');
+    video.srcObject = mediaStream;
+    video.onloadedmetadata = function(e) {
+      video.play();
+    };
+  })
+  .catch(function(err) { console.log(err.name + ": " + err.message); }); // always check for errors at the end.
+
+  // video devices to select:
+  navigator.mediaDevices.enumerateDevices()
+  .then(function(devices) {
+    devices.forEach(function(device,i) {
+      // console.log(device.kind + ": " + device.label + " id = " + device.deviceId);
+      if (device.kind == 'videoinput') {
+        $("#cams").append("<option value='"+ device.deviceId +"'>" + (device.label ? device.label : "Device " + i ) + "</option>");
+      }
+    });
+  });
+
+  $("#cams").change(function(){
+    var myid = $(this).val();
+    constraints = {
+      audio: false,
+      video: {
+        deviceId: myid,
+        width: 1280,
+        height: 720
+      }
+    };
+    // disconnect current video?
+    video.srcObject.getTracks().forEach( track => track.stop() );
+    video.srcObject = undefined;
+    video.src = "";
+
+    // switch:
+    navigator.mediaDevices.getUserMedia(constraints).then(function(mediaStream) {
+      video = document.querySelector('video');
+      video.srcObject = mediaStream;
+      video.onloadedmetadata = function(e) {
+        video.play();
+      };
+    })
+    console.log(myid);
+  });
+    </script>
+</body>
+</html>
